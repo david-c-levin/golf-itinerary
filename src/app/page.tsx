@@ -207,7 +207,7 @@ const seedData: Itinerary = {
       id: "2025-09-06",
       dateLabel: "Sat, Sept 6",
       city: "Dublin",
-      notes: "Everyone has rooms booked except Rick and Brit.",
+      notes: "Check-in Westbury Hotel. Everyone has rooms booked except Rick and Brit.",
       events: [
         {
           id: "sat6-dinner",
