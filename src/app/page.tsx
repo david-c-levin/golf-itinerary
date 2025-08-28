@@ -13,11 +13,51 @@ import { CalendarDays, MapPin, Users, Download, Plus, Search, Printer, Edit3, Re
 import { motion } from "framer-motion";
 
 // --------------------
+// Types
+// --------------------
+export interface EventItem {
+  id: string;
+  title: string;
+  location: string;
+  start: string; // ISO string
+  end: string;   // ISO string
+  notes?: string;
+  mapQuery?: string;
+  url?: string;
+  tags?: string[];
+}
+export interface DayPlan {
+  id: string; // YYYY-MM-DD
+  dateLabel?: string;
+  city: string;
+  notes?: string;
+  events: EventItem[];
+}
+export interface LodgingItem {
+  nights: string;
+  name: string;
+  city: string;
+}
+export interface Itinerary {
+  tripTitle: string;
+  subtitle: string;
+  homeBase: string;
+  participants: string[];
+  days: DayPlan[];
+  lodging: LodgingItem[];
+  tips: string[];
+}
+
+declare global {
+  interface Window { __itin?: Itinerary }
+}
+
+// --------------------
 // Constants & Helpers
 // --------------------
 const STORAGE_KEY = "golfTripItinerary_v1";
 
-function toICSDate(date: Date) {
+function toICSDate(date: Date): string {
   const pad = (n: number) => String(n).padStart(2, "0");
   const yyyy = date.getUTCFullYear();
   const mm = pad(date.getUTCMonth() + 1);
@@ -28,7 +68,7 @@ function toICSDate(date: Date) {
   return `${yyyy}${mm}${dd}T${hh}${min}${ss}Z`;
 }
 
-function buildICSEvent(evt: any) {
+function buildICSEvent(evt: EventItem): string {
   const uid = `${evt.id || Math.random().toString(36).slice(2)}@golf-itin`;
   const dtStart = toICSDate(new Date(evt.start));
   const dtEnd = toICSDate(new Date(evt.end));
@@ -48,12 +88,12 @@ function buildICSEvent(evt: any) {
   ].join("\n");
 }
 
-function downloadICS(itin: any, singleEvent?: any) {
+function downloadICS(itin: Itinerary, singleEvent?: EventItem): void {
   const header = ["BEGIN:VCALENDAR", "VERSION:2.0", "PRODID:-//Yu Ritual//Golf Trip//EN"];
   const footer = ["END:VCALENDAR"];
   const body = singleEvent
     ? buildICSEvent(singleEvent)
-    : itin.days.flatMap((d: any) => d.events.map(buildICSEvent)).join("\n");
+    : itin.days.flatMap((d) => d.events.map(buildICSEvent)).join("\n");
   const ics = [...header, body, ...footer].join("\n");
   const blob = new Blob([ics], { type: "text/calendar;charset=utf-8" });
   const url = URL.createObjectURL(blob);
@@ -64,17 +104,17 @@ function downloadICS(itin: any, singleEvent?: any) {
   URL.revokeObjectURL(url);
 }
 
-function openMaps(query: string) {
+function openMaps(query: string): void {
   if (!query) return;
   window.open(`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(query)}`, "_blank");
 }
-function openURL(url?: string) {
+function openURL(url?: string): void {
   if (!url) return;
   window.open(url, "_blank", "noopener");
 }
 
 // Format any date/time as Ireland time for on-screen display
-function formatIE(input: string | number | Date) {
+function formatIE(input: string | number | Date): string {
   return new Date(input).toLocaleString("en-IE", {
     timeZone: "Europe/Dublin",
     dateStyle: "medium",
@@ -82,12 +122,12 @@ function formatIE(input: string | number | Date) {
   });
 }
 
-// NEW: Compute the day label from real timestamps (US order, Europe/Dublin timezone)
-function formatDayLabel(day: any) {
+// Compute the day label from real timestamps (US order, Europe/Dublin timezone)
+function formatDayLabel(day: DayPlan): string {
   const dates = (day.events || [])
-    .map((e: any) => new Date(e.start))
-    .filter((d: any) => !isNaN(d as any))
-    .sort((a: Date, b: Date) => a.getTime() - b.getTime());
+    .map((e) => new Date(e.start))
+    .filter((d) => !isNaN(d.getTime()))
+    .sort((a, b) => a.getTime() - b.getTime());
   const src = dates.length ? dates[0] : new Date(String(day.id) + "T00:00:00Z");
   return src.toLocaleDateString("en-US", {
     timeZone: "Europe/Dublin",
@@ -98,15 +138,15 @@ function formatDayLabel(day: any) {
 }
 
 // Trip subtitle helpers (US-style date range, Europe/Dublin timezone)
-function monthDayUS(d: Date) {
+function monthDayUS(d: Date): string {
   return d.toLocaleDateString("en-US", { timeZone: "Europe/Dublin", month: "short", day: "numeric" });
 }
-function formatTripDateRange(days: any[]) {
+function formatTripDateRange(days: DayPlan[]): string {
   const starts: Date[] = [];
   const ends: Date[] = [];
-  (days || []).forEach((day: any) => {
+  (days || []).forEach((day) => {
     if (day?.events?.length) {
-      day.events.forEach((e: any) => { if (e?.start) starts.push(new Date(e.start)); if (e?.end) ends.push(new Date(e.end)); });
+      day.events.forEach((e) => { if (e?.start) starts.push(new Date(e.start)); if (e?.end) ends.push(new Date(e.end)); });
     } else if (day?.id) {
       const d = new Date(`${day.id}T00:00:00Z`);
       starts.push(d); ends.push(d);
@@ -128,23 +168,23 @@ function formatTripDateRange(days: any[]) {
   const startYear = start.toLocaleDateString("en-US", { timeZone:"Europe/Dublin", year:"numeric" });
   return `${monthDayUS(start)}, ${startYear} – ${monthDayUS(end)}, ${yearStr}`;
 }
-function getSubtitlePrefix(itin: any) {
+function getSubtitlePrefix(itin: Itinerary): string {
   const s = (itin?.subtitle || "").split("|")[0]?.trim();
   return s || "Ireland";
 }
-function computedSubtitle(itin: any) {
+function computedSubtitle(itin: Itinerary): string {
   const range = formatTripDateRange(itin?.days || []);
   return `${getSubtitlePrefix(itin)} | ${range}`;
 }
 
 // Pure helper (testable) — filters days by a text query
-function filterDays(days: any[], query: string) {
+function filterDays(days: DayPlan[], query: string): DayPlan[] {
   if (!query || !query.trim()) return days;
   const q = query.toLowerCase();
   return days
     .map((d) => ({
       ...d,
-      events: d.events.filter((e: any) => [
+      events: d.events.filter((e) => [
         e.title || "",
         e.location || "",
         e.notes || "",
@@ -157,7 +197,7 @@ function filterDays(days: any[], query: string) {
 // --------------------
 // Seed Data
 // --------------------
-const seedData = {
+const seedData: Itinerary = {
   tripTitle: "Hammer Laddies Roadtrip",
   subtitle: "Dublin • Wicklow • Killarney • Kinsale | Sept 6–13, 2025",
   homeBase: "The Westbury, Dublin (first 3 nights)",
@@ -385,7 +425,19 @@ const seedData = {
 // --------------------
 // UI Components
 // --------------------
-function HeaderBar({ title, subtitle, onPrint, onReset, onExportAll, search, setSearch, editMode, setEditMode }: any) {
+interface HeaderBarProps {
+  title: string;
+  subtitle: string;
+  onPrint: () => void;
+  onReset: () => void;
+  onExportAll: () => void;
+  search: string;
+  setSearch: (v: string) => void;
+  editMode: boolean;
+  setEditMode: (v: boolean) => void;
+}
+function HeaderBar({ title, subtitle, onPrint, onReset, onExportAll, search, setSearch, editMode, setEditMode }: HeaderBarProps) {
+  const onSearch = (e: React.ChangeEvent<HTMLInputElement>) => setSearch(e.target.value);
   return (
     <div className="sticky top-0 z-40 backdrop-blur bg-white/70 border-b">
       <div className="max-w-6xl mx-auto px-4 py-3 flex items-center gap-2">
@@ -397,7 +449,7 @@ function HeaderBar({ title, subtitle, onPrint, onReset, onExportAll, search, set
         <div className="hidden md:flex items-center gap-2">
           <div className="relative">
             <Search className="absolute left-2 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-            <Input value={search} onChange={(e)=>setSearch(e.target.value)} placeholder="Search events, places…" className="pl-8 w-64" />
+            <Input value={search} onChange={onSearch} placeholder="Search events, places…" className="pl-8 w-64" />
           </div>
           <div className="flex items-center gap-2">
             <div className="flex items-center gap-2 px-2">
@@ -412,7 +464,7 @@ function HeaderBar({ title, subtitle, onPrint, onReset, onExportAll, search, set
         </div>
       </div>
       <div className="md:hidden px-4 pb-3 flex gap-2">
-        <Input value={search} onChange={(e)=>setSearch(e.target.value)} placeholder="Search events, places…" />
+        <Input value={search} onChange={onSearch} placeholder="Search events, places…" />
         <Button variant="outline" onClick={onExportAll}><Download className="h-4 w-4"/></Button>
         <Button variant="outline" onClick={onPrint}><Printer className="h-4 w-4"/></Button>
         <Button variant="secondary" onClick={onReset}><RefreshCw className="h-4 w-4"/></Button>
@@ -421,35 +473,59 @@ function HeaderBar({ title, subtitle, onPrint, onReset, onExportAll, search, set
   );
 }
 
-function EventCard({ event, editMode, onUpdate }: any) {
-  const [e, setE] = useState(event);
-  useEffect(()=>setE(event), [event]);
-  const handleChange = (key: string, val: any) => { const updated = { ...e, [key]: val }; setE(updated); onUpdate(updated); };
+interface EventCardProps {
+  event: EventItem;
+  editMode: boolean;
+  onUpdate: (updated: EventItem) => void;
+}
+function EventCard({ event, editMode, onUpdate }: EventCardProps) {
+  const [e, setE] = useState<EventItem>(event);
+  useEffect(() => setE(event), [event]);
+
+  function handleChange<K extends keyof EventItem>(key: K, val: EventItem[K]) {
+    const updated = { ...e, [key]: val } as EventItem;
+    setE(updated);
+    onUpdate(updated);
+  }
+
+  const onTitle = (x: React.ChangeEvent<HTMLInputElement>) => handleChange("title", x.target.value);
+  const onLocation = (x: React.ChangeEvent<HTMLInputElement>) => handleChange("location", x.target.value);
+  const onNotes = (x: React.ChangeEvent<HTMLTextAreaElement>) => handleChange("notes", x.target.value);
+
   return (
     <Card className="border-muted/40">
       <CardHeader className="pb-2">
         <CardTitle className="text-base font-semibold flex items-start justify-between gap-2">
-          {editMode ? (<Input value={e.title} onChange={(x)=>handleChange('title', x.target.value)} />) : (<span>{e.title}</span>)}
+          {editMode ? (<Input value={e.title} onChange={onTitle} />) : (<span>{e.title}</span>)}
           <div className="shrink-0 flex gap-2">
             {e.url && <Button variant="outline" size="icon" onClick={()=>openURL(e.url)} title="Open course site"><ExternalLink className="h-4 w-4"/></Button>}
-            <Button variant="outline" size="icon" onClick={()=>downloadICS((window as any).__itin, e)} title="Export single event"><Download className="h-4 w-4"/></Button>
-            {e.mapQuery && <Button variant="outline" size="icon" onClick={()=>openMaps(e.mapQuery)} title="Open in Maps"><MapPin className="h-4 w-4"/></Button>}
+            <Button variant="outline" size="icon" onClick={()=>downloadICS(window.__itin as Itinerary, e)} title="Export single event"><Download className="h-4 w-4"/></Button>
+            {e.mapQuery && <Button variant="outline" size="icon" onClick={()=>openMaps(e.mapQuery!)} title="Open in Maps"><MapPin className="h-4 w-4"/></Button>}
           </div>
         </CardTitle>
       </CardHeader>
       <CardContent className="space-y-2">
         <div className="text-sm flex items-center gap-2"><CalendarDays className="h-4 w-4"/> <span>{formatIE(e.start)}</span> → <span>{formatIE(e.end)}</span></div>
-        <div className="text-sm flex items-start gap-2"><MapPin className="h-4 w-4 mt-0.5"/>{editMode ? (<Input value={e.location} onChange={(x)=>handleChange('location', x.target.value)} />) : (<span>{e.location}</span>)}</div>
-        {e.tags && <div className="flex flex-wrap gap-1">{e.tags.map((t: string)=> (<Badge key={t} variant="outline">{t}</Badge>))}</div>}
-        {editMode ? (<Textarea value={e.notes||""} onChange={(x)=>handleChange('notes', x.target.value)} placeholder="Notes" />) : (e.notes && <p className="text-sm text-muted-foreground">{e.notes}</p>)}
+        <div className="text-sm flex items-start gap-2"><MapPin className="h-4 w-4 mt-0.5"/>{editMode ? (<Input value={e.location} onChange={onLocation} />) : (<span>{e.location}</span>)}</div>
+        {e.tags && <div className="flex flex-wrap gap-1">{e.tags.map((t)=> (<Badge key={t} variant="outline">{t}</Badge>))}</div>}
+        {editMode ? (<Textarea value={e.notes||""} onChange={onNotes} placeholder="Notes" />) : (e.notes && <p className="text-sm text-muted-foreground">{e.notes}</p>)}
       </CardContent>
     </Card>
   );
 }
 
-function DayCard({ day, editMode, onUpdateEvent }: any) {
-  const [note, setNote] = useState(day.notes || "");
+interface DayCardProps {
+  day: DayPlan;
+  editMode: boolean;
+  onUpdateEvent: (dayId: string, evtId: string, updated: EventItem) => void;
+}
+function DayCard({ day, editMode, onUpdateEvent }: DayCardProps) {
+  const [note, setNote] = useState<string>(day.notes || "");
   useEffect(()=>{ setNote(day.notes || ""); }, [day.notes]);
+
+  const onChangeNote = (e: React.ChangeEvent<HTMLTextAreaElement>) => setNote(e.target.value);
+  const onBlurNote = () => { (day as DayPlan).notes = note; try { localStorage.setItem(STORAGE_KEY, JSON.stringify(window.__itin)); } catch { /* noop */ } };
+
   return (
     <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.3 }}>
       <Card className="shadow-sm">
@@ -466,15 +542,15 @@ function DayCard({ day, editMode, onUpdateEvent }: any) {
           {editMode ? (
             <div className="space-y-2">
               <label className="text-sm font-medium">Day Notes</label>
-              <Textarea value={note} onChange={(e)=>setNote(e.target.value)} onBlur={()=>{ day.notes = note; try { localStorage.setItem(STORAGE_KEY, JSON.stringify((window as any).__itin)); } catch {} }} placeholder="Logistics, reminders, etc." />
+              <Textarea value={note} onChange={onChangeNote} onBlur={onBlurNote} placeholder="Logistics, reminders, etc." />
             </div>
           ) : (
             day.notes && <p className="text-sm text-muted-foreground whitespace-pre-line">{day.notes}</p>
           )}
 
           <div className="grid md:grid-cols-2 gap-4">
-            {day.events.map((evt: any) => (
-              <EventCard key={evt.id} event={evt} editMode={editMode} onUpdate={(updated: any)=>onUpdateEvent(day.id, evt.id, updated)} />
+            {day.events.map((evt) => (
+              <EventCard key={evt.id} event={evt} editMode={editMode} onUpdate={(updated)=>onUpdateEvent(day.id, evt.id, updated)} />
             ))}
           </div>
         </CardContent>
@@ -483,21 +559,26 @@ function DayCard({ day, editMode, onUpdateEvent }: any) {
   );
 }
 
-function PeoplePanel({ list, setList }: any) {
-  const [name, setName] = useState("");
-  const add = () => { if(!name.trim()) return; const n = [...list, name.trim()]; setList(n); setName(""); };
-  const remove = (i: number) => { const n = list.filter((_: any, idx: number)=>idx!==i); setList(n); };
+interface PeoplePanelProps {
+  list: string[];
+  setList: (list: string[]) => void;
+}
+function PeoplePanel({ list, setList }: PeoplePanelProps) {
+  const [name, setName] = useState<string>("");
+  const onAdd = () => { if(!name.trim()) return; const n = [...list, name.trim()]; setList(n); setName(""); };
+  const onRemove = (i: number) => { const n = list.filter((_, idx)=>idx!==i); setList(n); };
+  const onChange = (e: React.ChangeEvent<HTMLInputElement>) => setName(e.target.value);
   return (
     <div className="space-y-2">
       <div className="flex gap-2">
-        <Input value={name} onChange={(e)=>setName(e.target.value)} placeholder="Add participant"/>
-        <Button onClick={add}><Plus className="h-4 w-4 mr-1"/>Add</Button>
+        <Input value={name} onChange={onChange} placeholder="Add participant"/>
+        <Button onClick={onAdd}><Plus className="h-4 w-4 mr-1"/>Add</Button>
       </div>
       <div className="grid sm:grid-cols-2 gap-2">
-        {list.map((p: string,i: number)=> (
+        {list.map((p,i)=> (
           <Badge key={`${p}-${i}`} variant="secondary" className="flex items-center justify-between gap-2 p-2">
             <Users className="h-4 w-4"/> {p}
-            <Button size="sm" variant="ghost" onClick={()=>remove(i)}>Remove</Button>
+            <Button size="sm" variant="ghost" onClick={()=>onRemove(i)}>Remove</Button>
           </Badge>
         ))}
       </div>
@@ -505,23 +586,31 @@ function PeoplePanel({ list, setList }: any) {
   );
 }
 
-function LodgingPanel({ lodging, editMode, setLodging }: any) {
-  const updateItem = (idx: number, key: string, val: string) => {
-    const copy = lodging.map((x: any,i: number)=> i===idx ? { ...x, [key]: val } : x);
+interface LodgingPanelProps {
+  lodging: LodgingItem[];
+  editMode: boolean;
+  setLodging: (items: LodgingItem[]) => void;
+}
+function LodgingPanel({ lodging, editMode, setLodging }: LodgingPanelProps) {
+  function updateItem<K extends keyof LodgingItem>(idx: number, key: K, val: LodgingItem[K]) {
+    const copy = lodging.map((x, i)=> i===idx ? { ...x, [key]: val } : x);
     setLodging(copy);
-  };
+  }
+  const onName = (idx: number) => (e: React.ChangeEvent<HTMLInputElement>) => updateItem(idx, "name", e.target.value);
+  const onCity = (idx: number) => (e: React.ChangeEvent<HTMLInputElement>) => updateItem(idx, "city", e.target.value);
+  const onNights = (idx: number) => (e: React.ChangeEvent<HTMLInputElement>) => updateItem(idx, "nights", e.target.value);
   return (
     <div className="grid md:grid-cols-3 gap-3">
-      {lodging.map((l: any, idx: number)=> (
+      {lodging.map((l, idx)=> (
         <Card key={idx}>
           <CardHeader>
             <CardTitle className="text-base">
-              {editMode ? <Input value={l.name} onChange={(e)=>updateItem(idx, 'name', e.target.value)} /> : l.name}
+              {editMode ? <Input value={l.name} onChange={onName(idx)} /> : l.name}
             </CardTitle>
           </CardHeader>
           <CardContent className="space-y-2 text-sm">
-            <div><span className="font-medium">City:</span> {editMode ? <Input value={l.city} onChange={(e)=>updateItem(idx, 'city', e.target.value)} /> : l.city}</div>
-            <div><span className="font-medium">Nights:</span> {editMode ? <Input value={l.nights} onChange={(e)=>updateItem(idx, 'nights', e.target.value)} /> : l.nights}</div>
+            <div><span className="font-medium">City:</span> {editMode ? <Input value={l.city} onChange={onCity(idx)} /> : l.city}</div>
+            <div><span className="font-medium">Nights:</span> {editMode ? <Input value={l.nights} onChange={onNights(idx)} /> : l.nights}</div>
             <Button variant="outline" onClick={()=>openMaps(`${l.name} ${l.city}`)}><ExternalLink className="h-4 w-4 mr-1"/>Map</Button>
           </CardContent>
         </Card>
@@ -530,20 +619,26 @@ function LodgingPanel({ lodging, editMode, setLodging }: any) {
   );
 }
 
-function TravelNotesPanel({ tips, setTips, editMode }: any) {
-  const [text, setText] = useState("");
+interface TravelNotesPanelProps {
+  tips: string[];
+  setTips: (tips: string[]) => void;
+  editMode: boolean;
+}
+function TravelNotesPanel({ tips, setTips, editMode }: TravelNotesPanelProps) {
+  const [text, setText] = useState<string>("");
   const add = () => { if(!text.trim()) return; setTips([...(tips||[]), text.trim()]); setText(""); };
-  const remove = (i: number) => { setTips(tips.filter((_: any,idx: number)=>idx!==i)); };
+  const remove = (i: number) => { setTips(tips.filter((_,idx)=>idx!==i)); };
+  const onChange = (e: React.ChangeEvent<HTMLInputElement>) => setText(e.target.value);
   return (
     <div>
       {editMode && (
         <div className="flex gap-2 mb-3">
-          <Input value={text} onChange={(e)=>setText(e.target.value)} placeholder="Add travel note"/>
+          <Input value={text} onChange={onChange} placeholder="Add travel note"/>
           <Button onClick={add}><Plus className="h-4 w-4 mr-1"/>Add</Button>
         </div>
       )}
       <ul className="list-disc pl-6 space-y-1 text-sm">
-        {tips.map((t: string,i: number)=> (
+        {tips.map((t,i)=> (
           <li key={i} className="flex items-start gap-2">
             <span className="flex-1">{t}</span>
             {editMode && <Button size="sm" variant="ghost" onClick={()=>remove(i)}>Remove</Button>}
@@ -559,24 +654,24 @@ function TravelNotesPanel({ tips, setTips, editMode }: any) {
 // --------------------
 function ItineraryApp(){
   // Load from localStorage after mount (avoids SSR/localStorage issues)
-  const [itin, setItin] = useState(seedData);
+  const [itin, setItin] = useState<Itinerary>(seedData);
   useEffect(() => {
-    try { const raw = localStorage.getItem(STORAGE_KEY); if (raw) setItin(JSON.parse(raw)); } catch { /* ignore */ }
+    try { const raw = localStorage.getItem(STORAGE_KEY); if (raw) setItin(JSON.parse(raw) as Itinerary); } catch { /* ignore */ }
   }, []);
 
-  useEffect(()=>{ try { (window as any).__itin = itin; } catch { /* noop */ } }, [itin]);
+  useEffect(()=>{ try { window.__itin = itin; } catch { /* noop */ } }, [itin]);
 
-  const [search, setSearch] = useState("");
-  const [editMode, setEditMode] = useState(false);
+  const [search, setSearch] = useState<string>("");
+  const [editMode, setEditMode] = useState<boolean>(false);
 
   useEffect(()=>{ try { localStorage.setItem(STORAGE_KEY, JSON.stringify(itin)); } catch { /* ignore */ } }, [itin]);
 
   const filteredDays = useMemo(() => filterDays(itin.days, search), [search, itin.days]);
 
-  const updateEvent = (dayId: string, evtId: string, updated: any) => {
+  const updateEvent = (dayId: string, evtId: string, updated: EventItem) => {
     setItin((prev)=> ({
       ...prev,
-      days: prev.days.map((d: any)=> d.id===dayId ? { ...d, events: d.events.map((e: any)=> e.id===evtId? updated : e) } : d)
+      days: prev.days.map((d)=> d.id===dayId ? { ...d, events: d.events.map((e)=> e.id===evtId? updated : e) } : d)
     }));
   };
 
@@ -588,7 +683,8 @@ function ItineraryApp(){
   // Runtime self-tests (non-blocking)
   // --------------------
   useEffect(() => {
-    const results: any[] = [];
+    type TestRow = { name: string; passed: boolean; error?: string };
+    const results: TestRow[] = [];
     try {
       const evt = seedData.days[0].events[0];
       const ics = buildICSEvent(evt);
@@ -596,7 +692,7 @@ function ItineraryApp(){
     } catch (e) { results.push({ name: 'ICS has DTSTART/DTEND', passed: false, error: String(e) }); }
 
     try {
-      const allGolfHaveLinks = seedData.days.flatMap((d: any)=>d.events).filter((e: any)=> (e.tags||[]).includes('golf')).every((e: any)=> !!e.url);
+      const allGolfHaveLinks = seedData.days.flatMap((d)=>d.events).filter((e)=> (e.tags||[]).includes('golf')).every((e)=> !!e.url);
       results.push({ name: 'All golf events have course URL', passed: allGolfHaveLinks });
     } catch (e) { results.push({ name: 'All golf events have course URL', passed: false, error: String(e) }); }
 
@@ -624,7 +720,6 @@ function ItineraryApp(){
       results.push({ name: 'computedSubtitle has year', passed: /20\d{2}/.test(subt) });
     } catch (e) { results.push({ name: 'computedSubtitle has year', passed: false, error: String(e) }); }
 
-    // eslint-disable-next-line no-console
     console.table(results);
   }, []);
 
@@ -652,7 +747,7 @@ function ItineraryApp(){
             <div className="text-sm">
               <div className="font-medium mb-1">Lodging</div>
               <div className="space-y-1">
-                {itin.lodging.map((l: any,i: number)=> (
+                {itin.lodging.map((l,i)=> (
                   <div key={i} className="flex items-center gap-2">
                     <Badge variant="outline">{l.city}</Badge>
                     <span className="font-medium">{l.name}</span>
@@ -672,15 +767,15 @@ function ItineraryApp(){
                 <div className="mt-4 space-y-6">
                   <div>
                     <div className="text-sm font-medium mb-2">Participants</div>
-                    <PeoplePanel list={itin.participants} setList={(n: any)=>setItin({...itin, participants:n})} />
+                    <PeoplePanel list={itin.participants} setList={(n)=>setItin({...itin, participants:n})} />
                   </div>
                   <div>
                     <div className="text-sm font-medium mb-2">Lodging</div>
-                    <LodgingPanel lodging={itin.lodging} editMode={true} setLodging={(l: any)=>setItin({...itin, lodging:l})} />
+                    <LodgingPanel lodging={itin.lodging} editMode={true} setLodging={(l)=>setItin({...itin, lodging:l})} />
                   </div>
                   <div>
                     <div className="text-sm font-medium mb-2">Travel Notes</div>
-                    <TravelNotesPanel tips={itin.tips} setTips={(t: any)=>setItin({...itin, tips:t})} editMode={true} />
+                    <TravelNotesPanel tips={itin.tips} setTips={(t)=>setItin({...itin, tips:t})} editMode={true} />
                   </div>
                 </div>
               </SheetContent>
@@ -695,7 +790,7 @@ function ItineraryApp(){
             <TabsTrigger value="notes">Travel Notes</TabsTrigger>
           </TabsList>
           <TabsContent value="days" className="space-y-4">
-            {filteredDays.map((d: any)=> (
+            {filteredDays.map((d)=> (
               <DayCard key={d.id} day={d} editMode={editMode} onUpdateEvent={updateEvent} />
             ))}
             {filteredDays.length===0 && (
@@ -703,10 +798,10 @@ function ItineraryApp(){
             )}
           </TabsContent>
           <TabsContent value="lodging">
-            <LodgingPanel lodging={itin.lodging} editMode={editMode} setLodging={(l: any)=>setItin({...itin, lodging:l})} />
+            <LodgingPanel lodging={itin.lodging} editMode={editMode} setLodging={(l)=>setItin({...itin, lodging:l})} />
           </TabsContent>
           <TabsContent value="notes">
-            <TravelNotesPanel tips={itin.tips} setTips={(t: any)=>setItin({...itin, tips:t})} editMode={editMode} />
+            <TravelNotesPanel tips={itin.tips} setTips={(t)=>setItin({...itin, tips:t})} editMode={editMode} />
           </TabsContent>
         </Tabs>
 
