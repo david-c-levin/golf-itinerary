@@ -198,7 +198,7 @@ function filterDays(days: DayPlan[], query: string): DayPlan[] {
 // Seed Data
 // --------------------
 const seedData: Itinerary = {
-  tripTitle: "Hammer Laddies Roadtrip",
+  tripTitle: "2025 Hammer Cup, Ireland",
   subtitle: "Dublin • Wicklow • Killarney • Kinsale | Sept 6–13, 2025",
   homeBase: "The Westbury, Dublin (first 3 nights)",
   participants: ["David", "Steve", "Pat", "Bill", "Jeff", "Brit", "Brian", "Rick"],
@@ -207,7 +207,7 @@ const seedData: Itinerary = {
       id: "2025-09-06",
       dateLabel: "Sat, Sept 6",
       city: "Dublin",
-      notes: "Check-in Westbury Hotel. Everyone has rooms booked except Rick and Brit.",
+      notes: "Check-in Westbury Hotel. Everyone has rooms booked except Rick and Brit.  Call or text if any issues checking in. Names on rooms. All fully pre-paid.",
       events: [
         {
           id: "sat6-dinner",
@@ -229,11 +229,11 @@ const seedData: Itinerary = {
       events: [
         {
           id: "rdg1",
-          title: "Royal Dublin — Depart 2:00 PM, Return 9:00 PM",
+          title: "Royal Dublin (3:30pm | 3:40) — Depart 2:00 PM, Return 9:00 PM",
           location: "Royal Dublin Golf Club, Bull Island, Dublin",
           start: "2025-09-07T13:00:00Z", // 2:00 PM Ireland
           end: "2025-09-07T20:00:00Z",   // 9:00 PM Ireland
-          notes: "Links golf; arrive 45–60 min early. Wind likely.",
+          notes: "Links golf; 30 minute drive. Leave 2pm",
           mapQuery: "Royal Dublin Golf Club",
           url: "https://www.royaldublingolfclub.com/",
           tags: ["golf", "caddie"],
@@ -258,7 +258,7 @@ const seedData: Itinerary = {
       events: [
         {
           id: "clg1",
-          title: "County Louth (Baltray) — Day Trip",
+          title: "County Louth (Baltray) (10:20 | 10:30) Depart 8AM",
           location: "Co. Louth Golf Club, Baltray",
           start: "2025-09-08T07:00:00Z", // 8:00 AM Ireland
           end: "2025-09-08T15:00:00Z",   // 4:00 PM Ireland
@@ -287,7 +287,7 @@ const seedData: Itinerary = {
       events: [
         {
           id: "pmk1",
-          title: "Portmarnock Golf Club — Day Trip",
+          title: "Portmarnock Golf Club — (2:10pm | 2:20pm) Leave 12:30pm",
           location: "Portmarnock Golf Club, Co. Dublin",
           start: "2025-09-09T11:30:00Z", // 12:30 PM Ireland
           end: "2025-09-09T18:30:00Z",   // 7:30 PM Ireland
@@ -320,7 +320,7 @@ const seedData: Itinerary = {
           location: "The European Club, Brittas Bay, Co. Wicklow",
           start: "2025-09-10T09:30:00Z", // 10:30 AM Ireland
           end: "2025-09-10T21:30:00Z",   // 10:30 PM Ireland
-          notes: "Iconic dunes; bring camera. Transfer to Killarney after golf.",
+          notes: "Iconic dunes;Transfer to Killarney after golf. Bring change of clothes for long transfer after golf.  Dinner in transit",
           mapQuery: "The European Club Wicklow",
           url: "https://www.theeuropeanclub.com/",
           tags: ["golf"],
@@ -331,7 +331,7 @@ const seedData: Itinerary = {
       id: "2025-09-11",
       dateLabel: "Thu, Sept 11",
       city: "Killarney ↔ Ballybunion (overnight Killarney)",
-      notes: "Kinsale Jazz Fest weekend coming up; traffic/parking tighter. Overnight in Killarney.",
+      notes: "Overnight in Killarney.",
       events: [
         {
           id: "ballybunion",
