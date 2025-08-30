@@ -373,7 +373,7 @@ const seedData: Itinerary = {
           mapQuery: "The Tap Taproom Kinsale",
           tags: ["drinks"],
         },
-       {
+        {
           id: "supper club",
           title: "Dinner at the Supper Club (8:30 PM)",
           location: "The Supper Club, Kinsale",
