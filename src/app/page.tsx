@@ -373,7 +373,16 @@ const seedData: Itinerary = {
           mapQuery: "The Tap Taproom Kinsale",
           tags: ["drinks"],
         },
-      ],
+       {
+          id: "supper club",
+          title: "Dinner at the Supper Club (8:30 PM)",
+          location: "The Supper Club, Kinsale",
+          start: "2025-09-12T19:30:00Z", // 8:30 PM Ireland
+          end: "2025-09-12T21:30:00Z",
+          notes: "Should be a great dinner in a great town.",
+          mapQuery: "The Supper Club Kinsale",
+          tags: ["dinner"],
+        },
     },
     {
       id: "2025-09-13",
