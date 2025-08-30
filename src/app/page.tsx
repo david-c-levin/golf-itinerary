@@ -195,7 +195,7 @@ function filterDays(days: DayPlan[], query: string): DayPlan[] {
 }
 
 // --------------------
-// Seed Data
+// Seed Data (YOUR latest edits applied, fixed brackets)
 // --------------------
 const seedData: Itinerary = {
   tripTitle: "2025 Hammer Cup, Ireland",
@@ -213,7 +213,7 @@ const seedData: Itinerary = {
           id: "sat6-dinner",
           title: "Dinner — Matt the Thresher (7:00 PM)",
           location: "Matt the Thresher, Dublin",
-          start: "2025-09-06T18:00:00Z", // 7:00 PM Ireland (UTC+1 in Sept)
+          start: "2025-09-06T18:00:00Z",
           end: "2025-09-06T20:00:00Z",
           notes: "Reservation for 6 people.",
           mapQuery: "Matt the Thresher Dublin",
@@ -231,8 +231,8 @@ const seedData: Itinerary = {
           id: "rdg1",
           title: "Royal Dublin (3:30pm | 3:40) — Depart 2:00 PM, Return 9:00 PM",
           location: "Royal Dublin Golf Club, Bull Island, Dublin",
-          start: "2025-09-07T13:00:00Z", // 2:00 PM Ireland
-          end: "2025-09-07T20:00:00Z",   // 9:00 PM Ireland
+          start: "2025-09-07T13:00:00Z",
+          end: "2025-09-07T20:00:00Z",
           notes: "Links golf; 30 minute drive. Leave 2pm",
           mapQuery: "Royal Dublin Golf Club",
           url: "https://www.royaldublingolfclub.com/",
@@ -242,7 +242,7 @@ const seedData: Itinerary = {
           id: "boxty-dinner",
           title: "Dinner — Gallagher’s Boxty House (9:30 PM)",
           location: "Gallagher’s Boxty House, Dublin",
-          start: "2025-09-07T20:30:00Z", // 9:30 PM Ireland
+          start: "2025-09-07T20:30:00Z",
           end: "2025-09-07T22:00:00Z",
           notes: "~10 minute walk from Westbury Hotel.",
           mapQuery: "Gallagher’s Boxty House Dublin",
@@ -260,8 +260,8 @@ const seedData: Itinerary = {
           id: "clg1",
           title: "County Louth (Baltray) (10:20 | 10:30) Depart 8AM",
           location: "Co. Louth Golf Club, Baltray",
-          start: "2025-09-08T07:00:00Z", // 8:00 AM Ireland
-          end: "2025-09-08T15:00:00Z",   // 4:00 PM Ireland
+          start: "2025-09-08T07:00:00Z",
+          end: "2025-09-08T15:00:00Z",
           notes: "Classic links; practice green upon arrival.",
           mapQuery: "County Louth Golf Club Baltray",
           url: "https://www.countylouthgolfclub.com/",
@@ -289,8 +289,8 @@ const seedData: Itinerary = {
           id: "pmk1",
           title: "Portmarnock Golf Club — (2:10pm | 2:20pm) Leave 12:30pm",
           location: "Portmarnock Golf Club, Co. Dublin",
-          start: "2025-09-09T11:30:00Z", // 12:30 PM Ireland
-          end: "2025-09-09T18:30:00Z",   // 7:30 PM Ireland
+          start: "2025-09-09T11:30:00Z",
+          end: "2025-09-09T18:30:00Z",
           notes: "Wind-breaker + layers; ball markers.",
           mapQuery: "Portmarnock Golf Club",
           url: "https://www.portmarnockgolfclub.ie/",
@@ -318,9 +318,9 @@ const seedData: Itinerary = {
           id: "euroclub",
           title: "The European Club — Golf (via transfer)",
           location: "The European Club, Brittas Bay, Co. Wicklow",
-          start: "2025-09-10T09:30:00Z", // 10:30 AM Ireland
-          end: "2025-09-10T21:30:00Z",   // 10:30 PM Ireland
-          notes: "Iconic dunes;Transfer to Killarney after golf. Bring change of clothes for long transfer after golf.  Dinner in transit",
+          start: "2025-09-10T09:30:00Z",
+          end: "2025-09-10T21:30:00Z",
+          notes: "Iconic dunes; Transfer to Killarney after golf. Bring change of clothes for long transfer after golf. Dinner in transit",
           mapQuery: "The European Club Wicklow",
           url: "https://www.theeuropeanclub.com/",
           tags: ["golf"],
@@ -367,7 +367,7 @@ const seedData: Itinerary = {
           id: "tap-taproom",
           title: "The Tap Taproom — Pint (5:00 PM)",
           location: "The Tap Taproom, Kinsale",
-          start: "2025-09-12T16:00:00Z", // 5:00 PM Ireland
+          start: "2025-09-12T16:00:00Z",
           end: "2025-09-12T17:00:00Z",
           notes: "Meet for a pint. Dinner TBD.",
           mapQuery: "The Tap Taproom Kinsale",
@@ -377,12 +377,13 @@ const seedData: Itinerary = {
           id: "supper club",
           title: "Dinner at the Supper Club (8:30 PM)",
           location: "The Supper Club, Kinsale",
-          start: "2025-09-12T19:30:00Z", // 8:30 PM Ireland
+          start: "2025-09-12T19:30:00Z",
           end: "2025-09-12T21:30:00Z",
           notes: "Should be a great dinner in a great town.",
           mapQuery: "The Supper Club Kinsale",
-          tags: ["dinner"],
+          tags: ["dining"],
         },
+      ],
     },
     {
       id: "2025-09-13",
@@ -728,6 +729,17 @@ function ItineraryApp(){
       const subt = computedSubtitle(seedData);
       results.push({ name: 'computedSubtitle has year', passed: /20\d{2}/.test(subt) });
     } catch (e) { results.push({ name: 'computedSubtitle has year', passed: false, error: String(e) }); }
+
+    try {
+      const fri = seedData.days.find(d=>d.id==="2025-09-12");
+      const hasSupper = !!fri && fri.events.some(e=>/Supper Club/i.test(e.title));
+      results.push({ name: 'Sept 12 includes Supper Club', passed: hasSupper });
+    } catch (e) { results.push({ name: 'Sept 12 includes Supper Club', passed: false, error: String(e) }); }
+
+    try {
+      const everyHasEventsArray = seedData.days.every(d=>Array.isArray(d.events));
+      results.push({ name: 'Every day has events array', passed: everyHasEventsArray });
+    } catch (e) { results.push({ name: 'Every day has events array', passed: false, error: String(e) }); }
 
     console.table(results);
   }, []);
