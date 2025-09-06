@@ -211,7 +211,7 @@ const seedData: Itinerary = {
       events: [
         {
           id: "sat6-dinner",
-          title: "NEW LOCATION: Dinner — Amai (7:00 PM)",
+          title: "Dinner (UPDATED) — Amai, across the street from the Westbury (7:00 PM)",
           location: "Amai, Dublin",
           start: "2025-09-06T18:00:00Z",
           end: "2025-09-06T20:00:00Z",
