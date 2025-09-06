@@ -211,12 +211,12 @@ const seedData: Itinerary = {
       events: [
         {
           id: "sat6-dinner",
-          title: "Dinner — Matt the Thresher (7:00 PM)",
-          location: "Matt the Thresher, Dublin",
+          title: "NEW LOCATION: Dinner — Amai (7:00 PM)",
+          location: "Amai, Dublin",
           start: "2025-09-06T18:00:00Z",
           end: "2025-09-06T20:00:00Z",
           notes: "Reservation for 6 people.",
-          mapQuery: "Matt the Thresher Dublin",
+          mapQuery: "Amai, Dublin",
           tags: ["dining"],
         },
       ],
