@@ -233,7 +233,7 @@ const seedData: Itinerary = {
           location: "Royal Dublin Golf Club, Bull Island, Dublin",
           start: "2025-09-07T13:00:00Z",
           end: "2025-09-07T20:00:00Z",
-          notes: "Links golf; 30 minute drive. Leave 2pm",
+          notes: "Pairins: 3:30 Levin (9) + Probst (11) v. Moran (23) + McConnell (15). 3:40 Jacobs (15) + Wallace (11) v. Goodman (13) + Werner (15)",
           mapQuery: "Royal Dublin Golf Club",
           url: "https://www.royaldublingolfclub.com/",
           tags: ["golf", "caddie"],
