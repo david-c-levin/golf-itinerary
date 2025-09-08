@@ -713,16 +713,26 @@ function LeaderboardTable({ title, rows, editMode, onChange }: { title: string; 
     </Card>
   );
 }
+function LeaderboardSection(
+  { data, setData, editMode }: {
+    data: LeaderboardData;
+    setData: (d: LeaderboardData) => void;
+    editMode: boolean;
+  }
+) {
+  // Strongly typed updater (no `any`)
+  const update =
+    <K extends keyof LeaderboardData>(board: K) =>
+    <P extends keyof LeaderboardEntry>(idx: number, key: P, value: string) => {
+      const rows = data[board] as LeaderboardEntry[]; // K is one of your arrays
+      const newRows = rows.map((r, i) =>
+        i === idx ? ({ ...r, [key]: value } as LeaderboardEntry) : r
+      ) as LeaderboardData[K];
 
-function LeaderboardSection({ data, setData, editMode }: { data: LeaderboardData; setData: (d: LeaderboardData)=>void; editMode: boolean; }){
-  const update = (board: keyof LeaderboardData) => (idx: number, key: keyof LeaderboardEntry, value: string) => {
-    const copy = { ...data } as LeaderboardData;
-    const list = [...copy[board]];
-    const row = { ...list[idx], [key]: key === 'score' ? value : value } as LeaderboardEntry;
-    list[idx] = row;
-    (copy as any)[board] = list;
-    setData(copy);
-  };
+      // Rebuild without casting to `any`
+      const newData: LeaderboardData = { ...data, [board]: newRows } as LeaderboardData;
+      setData(newData);
+    };
 
   return (
     <section className="space-y-3">
@@ -731,8 +741,18 @@ function LeaderboardSection({ data, setData, editMode }: { data: LeaderboardData
         <span className="text-xs text-muted-foreground">Sorted high → low</span>
       </div>
       <div className="grid md:grid-cols-2 gap-4">
-        <LeaderboardTable title="Gross Dollars Leaderboard" rows={data.grossDollars} editMode={editMode} onChange={update('grossDollars')} />
-        <LeaderboardTable title="Total Wins Leaderboard" rows={data.totalWins} editMode={editMode} onChange={update('totalWins')} />
+        <LeaderboardTable
+          title="Gross Dollars Leaderboard"
+          rows={data.grossDollars}
+          editMode={editMode}
+          onChange={update('grossDollars')}
+        />
+        <LeaderboardTable
+          title="Total Wins Leaderboard"
+          rows={data.totalWins}
+          editMode={editMode}
+          onChange={update('totalWins')}
+        />
       </div>
     </section>
   );
@@ -799,7 +819,6 @@ function ItineraryApp(){
       results.push({ name: 'Leaderboard sorts high→low', passed: toNumber(leaderboardSorted[0].score) >= toNumber(leaderboardSorted[1].score) });
     } catch (e) { results.push({ name: 'Leaderboard sort check', passed: false, error: String(e) }); }
 
-    // eslint-disable-next-line no-console
     console.table(results);
   }, []);
 
