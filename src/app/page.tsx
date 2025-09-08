@@ -1,19 +1,4 @@
-/** Ireland time for on-screen display */
 "use client";
-
-/* ---------- deterministic date/time formatters ---------- */
-const ieFormatter = new Intl.DateTimeFormat('en-IE', {
-  timeZone: 'Europe/Dublin',
-  dateStyle: 'medium',
-  timeStyle: 'short',
-});
-
-const dayLabelFormatter = new Intl.DateTimeFormat('en-US', {
-  timeZone: 'Europe/Dublin',
-  weekday: 'short',
-  month: 'short',
-  day: 'numeric',
-});
 
 import React, { useEffect, useMemo, useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -53,14 +38,17 @@ export interface LodgingItem {
   name: string;
   city: string;
 }
+
+// NEW: Leaderboards
 export interface LeaderboardEntry {
   player: string;
-  score: number | string; // allows +12 or -26 text; we parse for sorting
+  score: number | string; // allow +12 or "-26"
 }
 export interface LeaderboardData {
   grossDollars: LeaderboardEntry[]; // 8 entries
   totalWins: LeaderboardEntry[];    // 8 entries
 }
+
 export interface Itinerary {
   tripTitle: string;
   subtitle: string;
@@ -139,21 +127,26 @@ function openURL(url?: string): void {
 
 // Format any date/time as Ireland time for on-screen display
 function formatIE(input: string | number | Date): string {
-  const date =
-    typeof input === 'string' || typeof input === 'number'
-      ? new Date(input)
-      : input;
-  return ieFormatter.format(date);
+  return new Date(input).toLocaleString("en-IE", {
+    timeZone: "Europe/Dublin",
+    dateStyle: "medium",
+    timeStyle: "short",
+  });
 }
 
-/** Day label computed from real timestamps */
+// Compute the day label from real timestamps (US order, Europe/Dublin timezone)
 function formatDayLabel(day: DayPlan): string {
   const dates = (day.events || [])
     .map((e) => new Date(e.start))
     .filter((d) => !isNaN(d.getTime()))
     .sort((a, b) => a.getTime() - b.getTime());
   const src = dates.length ? dates[0] : new Date(String(day.id) + "T00:00:00Z");
-  return dayLabelFormatter.format(src);
+  return src.toLocaleDateString("en-US", {
+    timeZone: "Europe/Dublin",
+    weekday: "short",
+    month: "short",
+    day: "numeric",
+  });
 }
 
 // Trip subtitle helpers (US-style date range, Europe/Dublin timezone)
@@ -213,7 +206,7 @@ function filterDays(days: DayPlan[], query: string): DayPlan[] {
     .filter((d) => d.events.length > 0);
 }
 
-// Leaderboard helpers
+// NEW: Leaderboard helpers
 const toNumber = (v: number | string): number => {
   if (typeof v === "number") return v;
   const n = parseFloat(String(v).replace(/[^+\-0-9.]/g, ""));
@@ -221,11 +214,11 @@ const toNumber = (v: number | string): number => {
 };
 const fmtScore = (v: number | string): string => {
   const n = toNumber(v);
-  return n > 0 ? `+${n}` : `${n}`; // keep minus
+  return n > 0 ? `+${n}` : `${n}`;
 };
 
 // --------------------
-// Seed Data (with Leaderboard)
+// Seed Data (YOUR latest edits + Leaderboards)
 // --------------------
 const seedData: Itinerary = {
   tripTitle: "2025 Hammer Cup, Ireland",
@@ -233,8 +226,218 @@ const seedData: Itinerary = {
   homeBase: "The Westbury, Dublin (first 3 nights)",
   participants: ["David", "Steve", "Pat", "Bill", "Jeff", "Brit", "Brian", "Rick"],
   days: [
-    // ... (unchanged days/events you pasted)
-    // keep your day objects exactly as provided
+    {
+      id: "2025-09-06",
+      dateLabel: "Sat, Sept 6",
+      city: "Dublin",
+      notes: "Check-in Westbury Hotel. Everyone has rooms booked except Rick and Brit.  Call or text if any issues checking in. Names on rooms. All fully pre-paid.",
+      events: [
+        {
+          id: "sat6-dinner",
+          title: "Dinner (UPDATED) — Amai, across the street from the Westbury (7:00 PM)",
+          location: "Amai, Dublin",
+          start: "2025-09-06T18:00:00Z",
+          end: "2025-09-06T20:00:00Z",
+          notes: "Reservation for 6 people.",
+          mapQuery: "Amai, Dublin",
+          tags: ["dining"],
+        },
+      ],
+    },
+    {
+      id: "2025-09-07",
+      dateLabel: "Sun, Sept 7",
+      city: "Dublin",
+      notes: "Single caddies requested (~€70 + tip). Pick-up Westbury; ~30 min transfer.",
+      events: [
+        {
+          id: "rdg1",
+          title: "Royal Dublin (3:30pm | 3:40) — Depart 2:00 PM, Return 9:00 PM",
+          location: "Royal Dublin Golf Club, Bull Island, Dublin",
+          start: "2025-09-07T13:00:00Z",
+          end: "2025-09-07T20:00:00Z",
+          notes: "Pairins: 3:30 Levin (9) + Probst (11) v. Moran (23) + McConnell (15). 3:40 Jacobs (15) + Wallace (11) v. Goodman (13) + Werner (15)",
+          mapQuery: "Royal Dublin Golf Club",
+          url: "https://www.royaldublingolfclub.com/",
+          tags: ["golf", "caddie"],
+        },
+        {
+          id: "boxty-dinner",
+          title: "Dinner — Gallagher’s Boxty House (9:30 PM)",
+          location: "Gallagher’s Boxty House, Dublin",
+          start: "2025-09-07T20:30:00Z",
+          end: "2025-09-07T22:00:00Z",
+          notes: "~10 minute walk from Westbury Hotel.",
+          mapQuery: "Gallagher’s Boxty House Dublin",
+          tags: ["dining"],
+        },
+      ],
+    },
+    {
+      id: "2025-09-08",
+      dateLabel: "Mon, Sept 8",
+      city: "Dublin → Baltray → Dublin",
+      notes: "Departure 8:00 AM. Return 4:00 PM. Transfer ~1h10. Dinner 7:30 PM at Marco Pierre White (for 8).",
+      events: [
+        {
+          id: "clg1",
+          title: "County Louth (Baltray) (10:20 | 10:30) Depart 8AM",
+          location: "Co. Louth Golf Club, Baltray",
+          start: "2025-09-08T07:00:00Z",
+          end: "2025-09-08T15:00:00Z",
+          notes: "Classic links; practice green upon arrival.",
+          mapQuery: "County Louth Golf Club Baltray",
+          url: "https://www.countylouthgolfclub.com/",
+          tags: ["golf", "caddie"],
+        },
+        {
+          id: "dinner-mpw",
+          title: "Dinner — Marco Pierre White (7:30 PM)",
+          location: "Marco Pierre White, Dublin",
+          start: "2025-09-08T18:30:00Z",
+          end: "2025-09-08T20:30:00Z",
+          notes: "Table for 8.",
+          mapQuery: "Marco Pierre White Dublin",
+          tags: ["dining"],
+        },
+      ],
+    },
+    {
+      id: "2025-09-09",
+      dateLabel: "Tue, Sept 9",
+      city: "Dublin",
+      notes: "Departure 12:30 PM. Return 7:30 PM. Dinner 8:30 PM at Delahunt.",
+      events: [
+        {
+          id: "pmk1",
+          title: "Portmarnock Golf Club — (2:10pm | 2:20pm) Leave 12:30pm",
+          location: "Portmarnock Golf Club, Co. Dublin",
+          start: "2025-09-09T11:30:00Z",
+          end: "2025-09-09T18:30:00Z",
+          notes: "Wind-breaker + layers; ball markers.",
+          mapQuery: "Portmarnock Golf Club",
+          url: "https://www.portmarnockgolfclub.ie/",
+          tags: ["golf", "caddie"],
+        },
+        {
+          id: "dinner-delahunt",
+          title: "Dinner — Delahunt (8:30 PM)",
+          location: "Delahunt, 39 Camden Street Lower, Dublin",
+          start: "2025-09-09T19:30:00Z",
+          end: "2025-09-09T21:30:00Z",
+          notes: "Irish contemporary.",
+          mapQuery: "Delahunt Dublin",
+          tags: ["dining"],
+        },
+      ],
+    },
+    {
+      id: "2025-09-10",
+      dateLabel: "Wed, Sept 10",
+      city: "Wicklow (The European Club) → Killarney (overnight)",
+      notes: "Pick-Up: Westbury Hotel. Drop-Off: The European Club (Tee times: 12:32 PM & 12:40 PM). After golf, continue to Killarney Plaza Hotel (~4 hrs drive). Depart 10:30 AM. ~1 hr to the course.",
+      events: [
+        {
+          id: "euroclub",
+          title: "The European Club — Golf (via transfer)",
+          location: "The European Club, Brittas Bay, Co. Wicklow",
+          start: "2025-09-10T09:30:00Z",
+          end: "2025-09-10T21:30:00Z",
+          notes: "Iconic dunes; Transfer to Killarney after golf. Bring change of clothes for long transfer after golf. Dinner in transit",
+          mapQuery: "The European Club Wicklow",
+          url: "https://www.theeuropeanclub.com/",
+          tags: ["golf"],
+        },
+      ],
+    },
+    {
+      id: "2025-09-11",
+      dateLabel: "Thu, Sept 11",
+      city: "Killarney ↔ Ballybunion (overnight Killarney)",
+      notes: "Overnight in Killarney.",
+      events: [
+        {
+          id: "ballybunion",
+          title: "Ballybunion Old Course — Tee Time 2:00 PM",
+          location: "Ballybunion Golf Club, Co. Kerry",
+          start: "2025-09-11T13:00:00Z",
+          end: "2025-09-11T19:00:00Z",
+          notes: "Steep dunes; consider a caddie for lines.",
+          mapQuery: "Ballybunion Golf Club",
+          url: "https://www.ballybuniongolfclub.com/",
+          tags: ["golf", "caddie"],
+        },
+      ],
+    },
+    {
+      id: "2025-09-12",
+      dateLabel: "Fri, Sept 12",
+      city: "Killarney → Waterville → Kinsale (overnight)",
+      notes: "Early start; coffee + breakfast to-go recommended. Overnight in Kinsale. Dinner TBD.",
+      events: [
+        {
+          id: "waterville",
+          title: "Waterville Golf Links — Tee Time 8:10 AM",
+          location: "Waterville, Co. Kerry",
+          start: "2025-09-12T07:00:00Z",
+          end: "2025-09-12T13:00:00Z",
+          notes: "Layer up; coastal breeze.",
+          mapQuery: "Waterville Golf Links",
+          url: "https://www.watervillegolflinks.ie/",
+          tags: ["golf"],
+        },
+        {
+          id: "tap-taproom",
+          title: "The Tap Taproom — Pint (5:00 PM)",
+          location: "The Tap Taproom, Kinsale",
+          start: "2025-09-12T16:00:00Z",
+          end: "2025-09-12T17:00:00Z",
+          notes: "Meet for a pint. Dinner TBD.",
+          mapQuery: "The Tap Taproom Kinsale",
+          tags: ["drinks"],
+        },
+        {
+          id: "supper club",
+          title: "Dinner at the Supper Club (8:30 PM)",
+          location: "The Supper Club, Kinsale",
+          start: "2025-09-12T19:30:00Z",
+          end: "2025-09-12T21:30:00Z",
+          notes: "Should be a great dinner in a great town.",
+          mapQuery: "The Supper Club Kinsale",
+          tags: ["dining"],
+        },
+      ],
+    },
+    {
+      id: "2025-09-13",
+      dateLabel: "Sat, Sept 13",
+      city: "Kinsale — Old Head → Dublin",
+      notes: "Two groups: morning & late morning. Dramatic cliffs — safety first. Ground Transportation will return to Dublin departing around 4pm. Please book your own room for Saturday night.",
+      events: [
+        {
+          id: "oldhead-early",
+          title: "Old Head Golf Links — Tee Time ~8:00 AM",
+          location: "Old Head Golf Links, Kinsale",
+          start: "2025-09-13T07:00:00Z",
+          end: "2025-09-13T12:30:00Z",
+          notes: "Photo ops on 4, 7, 12, 18.",
+          mapQuery: "Old Head Golf Links Kinsale",
+          url: "https://www.oldhead.com/",
+          tags: ["golf"],
+        },
+        {
+          id: "oldhead-late",
+          title: "Old Head Golf Links — Tee Time ~11:00 AM",
+          location: "Old Head Golf Links, Kinsale",
+          start: "2025-09-13T10:00:00Z",
+          end: "2025-09-13T15:30:00Z",
+          notes: "Wind picks up; pack extra balls.",
+          mapQuery: "Old Head Golf Links Kinsale",
+          url: "https://www.oldhead.com/",
+          tags: ["golf"],
+        },
+      ],
+    },
   ],
   lodging: [
     { nights: "Sept 6–9 (Sat–Tue)", name: "The Westbury", city: "Dublin" },
@@ -250,12 +453,13 @@ const seedData: Itinerary = {
     "Sprinter will take us to Dublin on Sat after golf.",
     "Hotel Breakfasts Included",
   ],
+  // NEW: leaderboards
   leaderboard: {
     grossDollars: [
       { player: "David", score: -26 },
-      { player: "Brit", score: -26 },
-      { player: "Bill", score: +26 },
-      { player: "Pat",  score: +26 },
+      { player: "Brit",  score: -26 },
+      { player: "Bill",  score: +26 },
+      { player: "Pat",   score: +26 },
       { player: "Steve", score: -12 },
       { player: "Jeff",  score: -12 },
       { player: "Wally", score: +12 },
@@ -471,10 +675,53 @@ function LodgingPanel({ lodging, editMode, setLodging }: LodgingPanelProps) {
   );
 }
 
-// ---------- Leaderboard ----------
-function LeaderboardTable({ title, rows, editMode, onChange }: { title: string; rows: LeaderboardEntry[]; editMode: boolean; onChange: (idx: number, key: keyof LeaderboardEntry, value: string) => void; }) {
-  const sorted = useMemo(() => {
-    return [...rows]
+// NEW: Optional Travel Notes panel (kept from your original)
+interface TravelNotesPanelProps {
+  tips: string[];
+  setTips: (tips: string[]) => void;
+  editMode: boolean;
+}
+function TravelNotesPanel({ tips, setTips, editMode }: TravelNotesPanelProps) {
+  const [text, setText] = useState<string>("");
+  const add = () => { if(!text.trim()) return; setTips([...(tips||[]), text.trim()]); setText(""); };
+  const remove = (i: number) => { setTips(tips.filter((_,idx)=>idx!==i)); };
+  const onChange = (e: React.ChangeEvent<HTMLInputElement>) => setText(e.target.value);
+  return (
+    <div>
+      {editMode && (
+        <div className="flex gap-2 mb-3">
+          <Input value={text} onChange={onChange} placeholder="Add travel note"/>
+          <Button onClick={add}><Plus className="h-4 w-4 mr-1"/>Add</Button>
+        </div>
+      )}
+      <ul className="list-disc pl-6 space-y-1 text-sm">
+        {tips.map((t,i)=> (
+          <li key={i} className="flex items-start gap-2">
+            <span className="flex-1">{t}</span>
+            {editMode && <Button size="sm" variant="ghost" onClick={()=>remove(i)}>Remove</Button>}
+          </li>
+        ))}
+      </ul>
+    </div>
+  );
+}
+
+// ---------- Leaderboards ----------
+type RowWithIndex = LeaderboardEntry & { __i: number };
+
+function LeaderboardTable({
+  title,
+  rows,
+  editMode,
+  onChange,
+}: {
+  title: string;
+  rows: LeaderboardEntry[];
+  editMode: boolean;
+  onChange: (idx: number, key: keyof LeaderboardEntry, value: string) => void;
+}) {
+  const sorted = useMemo<RowWithIndex[]>(() => {
+    return rows
       .map((r, i) => ({ ...r, __i: i }))
       .sort((a, b) => toNumber(b.score) - toNumber(a.score));
   }, [rows]);
@@ -500,14 +747,23 @@ function LeaderboardTable({ title, rows, editMode, onChange }: { title: string; 
                   <td className="p-2">{viewIdx + 1}</td>
                   <td className="p-2">
                     {editMode ? (
-                      <Input value={r.player} placeholder={`Player ${viewIdx+1}`} onChange={(e)=>onChange(r.__i!, 'player', e.target.value)} />
+                      <Input
+                        value={r.player}
+                        placeholder={`Player ${viewIdx+1}`}
+                        onChange={(e)=>onChange(r.__i, 'player', e.target.value)}
+                      />
                     ) : (
                       <span>{r.player || '—'}</span>
                     )}
                   </td>
                   <td className="p-2 text-right">
                     {editMode ? (
-                      <Input value={String(r.score ?? '')} placeholder="0" className="text-right" onChange={(e)=>onChange(r.__i!, 'score', e.target.value)} />
+                      <Input
+                        value={String(r.score ?? '')}
+                        placeholder="0"
+                        className="text-right"
+                        onChange={(e)=>onChange(r.__i, 'score', e.target.value)}
+                      />
                     ) : (
                       <span className="tabular-nums">{fmtScore(r.score ?? 0)}</span>
                     )}
@@ -521,13 +777,16 @@ function LeaderboardTable({ title, rows, editMode, onChange }: { title: string; 
     </Card>
   );
 }
-function LeaderboardSection(
-  { data, setData, editMode }: {
-    data: LeaderboardData;
-    setData: (d: LeaderboardData) => void;
-    editMode: boolean;
-  }
-) {
+
+function LeaderboardSection({
+  data,
+  setData,
+  editMode,
+}: {
+  data: LeaderboardData;
+  setData: (d: LeaderboardData) => void;
+  editMode: boolean;
+}) {
   const update =
     <K extends keyof LeaderboardData>(board: K) =>
     <P extends keyof LeaderboardEntry>(idx: number, key: P, value: string) => {
@@ -535,9 +794,7 @@ function LeaderboardSection(
       const newRows = rows.map((r, i) =>
         i === idx ? ({ ...r, [key]: value } as LeaderboardEntry) : r
       ) as LeaderboardData[K];
-
-      const newData: LeaderboardData = { ...data, [board]: newRows } as LeaderboardData;
-      setData(newData);
+      setData({ ...data, [board]: newRows });
     };
 
   return (
@@ -568,9 +825,22 @@ function LeaderboardSection(
 // Main App
 // --------------------
 function ItineraryApp(){
+  // Load from localStorage after mount; ensure new leaderboard field exists
   const [itin, setItin] = useState<Itinerary>(seedData);
   useEffect(() => {
-    try { const raw = localStorage.getItem(STORAGE_KEY); if (raw) setItin(JSON.parse(raw) as Itinerary); } catch { /* ignore */ }
+    try {
+      const raw = localStorage.getItem(STORAGE_KEY);
+      if (raw) {
+        const parsed = JSON.parse(raw) as Partial<Itinerary>;
+        setItin({
+          ...seedData,
+          ...parsed,
+          leaderboard: parsed.leaderboard ?? seedData.leaderboard,
+        });
+        return;
+      }
+    } catch { /* ignore */ }
+    setItin(seedData);
   }, []);
 
   useEffect(()=>{ try { window.__itin = itin; } catch { /* noop */ } }, [itin]);
@@ -593,41 +863,6 @@ function ItineraryApp(){
   const onPrint = () => window.print();
   const onExportAll = () => downloadICS(itin);
 
-  // --------------------
-  // Runtime self-tests (non-blocking)
-  // --------------------
-  useEffect(() => {
-    type TestRow = { name: string; passed: boolean; error?: string };
-    const results: TestRow[] = [];
-    try {
-      const evt = seedData.days[0].events[0];
-      const ics = buildICSEvent(evt);
-      results.push({ name: 'ICS has DTSTART/DTEND', passed: /DTSTART:/.test(ics) && /DTEND:/.test(ics) });
-    } catch (e) { results.push({ name: 'ICS has DTSTART/DTEND', passed: false, error: String(e) }); }
-
-    try {
-      const allGolfHaveLinks = seedData.days.flatMap((d)=>d.events).filter((e)=> (e.tags||[]).includes('golf')).every((e)=> !!e.url);
-      results.push({ name: 'All golf events have course URL', passed: allGolfHaveLinks });
-    } catch (e) { results.push({ name: 'All golf events have course URL', passed: false, error: String(e) }); }
-
-    try {
-      const none = filterDays(seedData.days, "");
-      const bb = filterDays(seedData.days, "ballybunion");
-      const pm = filterDays(seedData.days, "portmarnock");
-      results.push({ name: 'filterDays(empty) returns all days', passed: none.length === seedData.days.length });
-      results.push({ name: 'filterDays finds ballybunion', passed: bb.some((d)=>d.events.length>0) });
-      results.push({ name: 'filterDays finds portmarnock', passed: pm.some((d)=>d.events.length>0) });
-    } catch (e) { results.push({ name: 'filterDays suite', passed: false, error: String(e) }); }
-
-    try {
-      const leaderboardSorted = [...seedData.leaderboard.grossDollars].sort((a,b)=>toNumber(b.score)-toNumber(a.score));
-      results.push({ name: 'Leaderboard sorts high→low', passed: toNumber(leaderboardSorted[0].score) >= toNumber(leaderboardSorted[1].score) });
-    } catch (e) { results.push({ name: 'Leaderboard sort check', passed: false, error: String(e) }); }
-
-    // eslint-disable-next-line no-console
-    console.table(results);
-  }, []);
-
   return (
     <div className="min-h-screen bg-gradient-to-b from-slate-50 to-white">
       <HeaderBar 
@@ -643,7 +878,6 @@ function ItineraryApp(){
       />
 
       <main className="max-w-6xl mx-auto px-4 py-6 space-y-6">
-        {/* Top summary card */}
         <Card>
           <CardContent className="py-4 grid md:grid-cols-3 gap-4 items-center">
             <div>
@@ -685,10 +919,13 @@ function ItineraryApp(){
           </CardContent>
         </Card>
 
-        {/* NEW: Leaderboard section (above itinerary) */}
-        <LeaderboardSection data={itin.leaderboard} editMode={editMode} setData={(d)=>setItin({...itin, leaderboard:d})} />
+        {/* NEW: Leaderboards */}
+        <LeaderboardSection
+          data={itin.leaderboard}
+          editMode={editMode}
+          setData={(d)=>setItin({...itin, leaderboard:d})}
+        />
 
-        {/* Itinerary tabs */}
         <Tabs defaultValue="days" className="w-full">
           <TabsList className="grid grid-cols-3 w-full">
             <TabsTrigger value="days">Daily Plan</TabsTrigger>
@@ -708,9 +945,7 @@ function ItineraryApp(){
           </TabsContent>
           <TabsContent value="notes">
             <div className="text-sm text-muted-foreground mb-2">Trip tips / reminders</div>
-            <ul className="list-disc pl-6 space-y-1 text-sm">
-              {itin.tips.map((t,i)=> (<li key={i}>{t}</li>))}
-            </ul>
+            <TravelNotesPanel tips={itin.tips} setTips={(t)=>setItin({...itin, tips:t})} editMode={editMode} />
           </TabsContent>
         </Tabs>
 
@@ -732,7 +967,7 @@ function ItineraryApp(){
           </CardHeader>
           <CardContent className="text-sm text-muted-foreground space-y-2">
             <p>Use <span className="font-medium">Export .ics</span> to drop events into your calendar. Use <span className="font-medium">Print</span> for a clean PDF (browser print dialog).</p>
-            <p>Your edits auto-save to your browser (local storage). Toggle <span className="font-medium">Edit</span> to update leaderboards live.</p>
+            <p>Your edits auto-save to your browser (local storage). Click <span className="font-medium">Reset</span> anytime to restore the starter itinerary.</p>
           </CardContent>
         </Card>
       </main>
