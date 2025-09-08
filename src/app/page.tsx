@@ -38,6 +38,14 @@ export interface LodgingItem {
   name: string;
   city: string;
 }
+export interface LeaderboardEntry {
+  player: string;
+  score: number | string; // allows +12 or -26 text; we parse for sorting
+}
+export interface LeaderboardData {
+  grossDollars: LeaderboardEntry[]; // 8 entries
+  totalWins: LeaderboardEntry[];    // 8 entries
+}
 export interface Itinerary {
   tripTitle: string;
   subtitle: string;
@@ -46,6 +54,7 @@ export interface Itinerary {
   days: DayPlan[];
   lodging: LodgingItem[];
   tips: string[];
+  leaderboard: LeaderboardData; // NEW
 }
 
 declare global {
@@ -194,8 +203,19 @@ function filterDays(days: DayPlan[], query: string): DayPlan[] {
     .filter((d) => d.events.length > 0);
 }
 
+// Leaderboard helpers
+const toNumber = (v: number | string): number => {
+  if (typeof v === "number") return v;
+  const n = parseFloat(String(v).replace(/[^+\-0-9.]/g, ""));
+  return isNaN(n) ? 0 : n;
+};
+const fmtScore = (v: number | string): string => {
+  const n = toNumber(v);
+  return n > 0 ? `+${n}` : `${n}`; // keep minus
+};
+
 // --------------------
-// Seed Data (YOUR latest edits applied, fixed brackets)
+// Seed Data (with Leaderboard)
 // --------------------
 const seedData: Itinerary = {
   tripTitle: "2025 Hammer Cup, Ireland",
@@ -430,6 +450,20 @@ const seedData: Itinerary = {
     "Sprinter will take us to Dublin on Sat after golf.",
     "Hotel Breakfasts Included",
   ],
+  leaderboard: {
+    // You can edit these in code or in-app (toggle Edit)
+    grossDollars: [
+      { player: "David", score: -26 },
+      { player: "Brit", score: -26 },
+      { player: "Bill", score: +26 },
+      { player: "Pat",  score: +26 },
+      { player: "Steve", score: -12 },
+      { player: "Jeff",  score: -12 },
+      { player: "Wally", score: +12 },
+      { player: "Rick",  score: +12 },
+    ],
+    totalWins: Array.from({ length: 8 }, () => ({ player: "", score: 0 })),
+  },
 };
 
 // --------------------
@@ -629,33 +663,78 @@ function LodgingPanel({ lodging, editMode, setLodging }: LodgingPanelProps) {
   );
 }
 
-interface TravelNotesPanelProps {
-  tips: string[];
-  setTips: (tips: string[]) => void;
-  editMode: boolean;
-}
-function TravelNotesPanel({ tips, setTips, editMode }: TravelNotesPanelProps) {
-  const [text, setText] = useState<string>("");
-  const add = () => { if(!text.trim()) return; setTips([...(tips||[]), text.trim()]); setText(""); };
-  const remove = (i: number) => { setTips(tips.filter((_,idx)=>idx!==i)); };
-  const onChange = (e: React.ChangeEvent<HTMLInputElement>) => setText(e.target.value);
+// ---------- Leaderboard ----------
+function LeaderboardTable({ title, rows, editMode, onChange }: { title: string; rows: LeaderboardEntry[]; editMode: boolean; onChange: (idx: number, key: keyof LeaderboardEntry, value: string) => void; }) {
+  const sorted = useMemo(() => {
+    return [...rows]
+      .map((r, i) => ({ ...r, __i: i }))
+      .sort((a, b) => toNumber(b.score) - toNumber(a.score));
+  }, [rows]);
+
   return (
-    <div>
-      {editMode && (
-        <div className="flex gap-2 mb-3">
-          <Input value={text} onChange={onChange} placeholder="Add travel note"/>
-          <Button onClick={add}><Plus className="h-4 w-4 mr-1"/>Add</Button>
+    <Card className="border-muted/50">
+      <CardHeader>
+        <CardTitle className="text-base">{title}</CardTitle>
+      </CardHeader>
+      <CardContent>
+        <div className="overflow-x-auto">
+          <table className="w-full text-sm border border-slate-200 rounded-md">
+            <thead className="bg-slate-50">
+              <tr>
+                <th className="text-left p-2 w-16">Place</th>
+                <th className="text-left p-2">Player</th>
+                <th className="text-right p-2 w-28">Score</th>
+              </tr>
+            </thead>
+            <tbody>
+              {sorted.slice(0,8).map((r, viewIdx) => (
+                <tr key={`${r.__i}-${viewIdx}`} className="border-t">
+                  <td className="p-2">{viewIdx + 1}</td>
+                  <td className="p-2">
+                    {editMode ? (
+                      <Input value={r.player} placeholder={`Player ${viewIdx+1}`} onChange={(e)=>onChange(r.__i!, 'player', e.target.value)} />
+                    ) : (
+                      <span>{r.player || '—'}</span>
+                    )}
+                  </td>
+                  <td className="p-2 text-right">
+                    {editMode ? (
+                      <Input value={String(r.score ?? '')} placeholder="0" className="text-right" onChange={(e)=>onChange(r.__i!, 'score', e.target.value)} />
+                    ) : (
+                      <span className="tabular-nums">{fmtScore(r.score ?? 0)}</span>
+                    )}
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
         </div>
-      )}
-      <ul className="list-disc pl-6 space-y-1 text-sm">
-        {tips.map((t,i)=> (
-          <li key={i} className="flex items-start gap-2">
-            <span className="flex-1">{t}</span>
-            {editMode && <Button size="sm" variant="ghost" onClick={()=>remove(i)}>Remove</Button>}
-          </li>
-        ))}
-      </ul>
-    </div>
+      </CardContent>
+    </Card>
+  );
+}
+
+function LeaderboardSection({ data, setData, editMode }: { data: LeaderboardData; setData: (d: LeaderboardData)=>void; editMode: boolean; }){
+  const update = (board: keyof LeaderboardData) => (idx: number, key: keyof LeaderboardEntry, value: string) => {
+    const copy = { ...data } as LeaderboardData;
+    const list = [...copy[board]];
+    const row = { ...list[idx], [key]: key === 'score' ? value : value } as LeaderboardEntry;
+    list[idx] = row;
+    (copy as any)[board] = list;
+    setData(copy);
+  };
+
+  return (
+    <section className="space-y-3">
+      <div className="flex items-center justify-between">
+        <h2 className="text-lg font-semibold">Leaderboard</h2>
+        <span className="text-xs text-muted-foreground">Sorted high → low</span>
+      </div>
+      <div className="grid md:grid-cols-2 gap-4">
+        <LeaderboardTable title="Gross Dollars Leaderboard" rows={data.grossDollars} editMode={editMode} onChange={update('grossDollars')} />
+        <LeaderboardTable title="Total Wins Leaderboard" rows={data.totalWins} editMode={editMode} onChange={update('totalWins')} />
+      </div>
+    </section>
   );
 }
 
@@ -716,31 +795,11 @@ function ItineraryApp(){
     } catch (e) { results.push({ name: 'filterDays suite', passed: false, error: String(e) }); }
 
     try {
-      const sample = formatIE("2025-09-07T13:00:00Z");
-      results.push({ name: 'IE time formatting returns string', passed: typeof sample === 'string' && /2025/.test(sample) });
-    } catch (e) { results.push({ name: 'IE time formatting returns string', passed: false, error: String(e) }); }
+      const leaderboardSorted = [...seedData.leaderboard.grossDollars].sort((a,b)=>toNumber(b.score)-toNumber(a.score));
+      results.push({ name: 'Leaderboard sorts high→low', passed: toNumber(leaderboardSorted[0].score) >= toNumber(leaderboardSorted[1].score) });
+    } catch (e) { results.push({ name: 'Leaderboard sort check', passed: false, error: String(e) }); }
 
-    try {
-      const lbl = formatDayLabel(seedData.days[0]);
-      results.push({ name: 'formatDayLabel returns string', passed: typeof lbl === 'string' && lbl.length > 5 });
-    } catch (e) { results.push({ name: 'formatDayLabel returns string', passed: false, error: String(e) }); }
-
-    try {
-      const subt = computedSubtitle(seedData);
-      results.push({ name: 'computedSubtitle has year', passed: /20\d{2}/.test(subt) });
-    } catch (e) { results.push({ name: 'computedSubtitle has year', passed: false, error: String(e) }); }
-
-    try {
-      const fri = seedData.days.find(d=>d.id==="2025-09-12");
-      const hasSupper = !!fri && fri.events.some(e=>/Supper Club/i.test(e.title));
-      results.push({ name: 'Sept 12 includes Supper Club', passed: hasSupper });
-    } catch (e) { results.push({ name: 'Sept 12 includes Supper Club', passed: false, error: String(e) }); }
-
-    try {
-      const everyHasEventsArray = seedData.days.every(d=>Array.isArray(d.events));
-      results.push({ name: 'Every day has events array', passed: everyHasEventsArray });
-    } catch (e) { results.push({ name: 'Every day has events array', passed: false, error: String(e) }); }
-
+    // eslint-disable-next-line no-console
     console.table(results);
   }, []);
 
@@ -759,6 +818,7 @@ function ItineraryApp(){
       />
 
       <main className="max-w-6xl mx-auto px-4 py-6 space-y-6">
+        {/* Top summary card */}
         <Card>
           <CardContent className="py-4 grid md:grid-cols-3 gap-4 items-center">
             <div>
@@ -794,16 +854,16 @@ function ItineraryApp(){
                     <div className="text-sm font-medium mb-2">Lodging</div>
                     <LodgingPanel lodging={itin.lodging} editMode={true} setLodging={(l)=>setItin({...itin, lodging:l})} />
                   </div>
-                  <div>
-                    <div className="text-sm font-medium mb-2">Travel Notes</div>
-                    <TravelNotesPanel tips={itin.tips} setTips={(t)=>setItin({...itin, tips:t})} editMode={true} />
-                  </div>
                 </div>
               </SheetContent>
             </Sheet>
           </CardContent>
         </Card>
 
+        {/* NEW: Leaderboard section (above itinerary) */}
+        <LeaderboardSection data={itin.leaderboard} editMode={editMode} setData={(d)=>setItin({...itin, leaderboard:d})} />
+
+        {/* Itinerary tabs */}
         <Tabs defaultValue="days" className="w-full">
           <TabsList className="grid grid-cols-3 w-full">
             <TabsTrigger value="days">Daily Plan</TabsTrigger>
@@ -822,7 +882,10 @@ function ItineraryApp(){
             <LodgingPanel lodging={itin.lodging} editMode={editMode} setLodging={(l)=>setItin({...itin, lodging:l})} />
           </TabsContent>
           <TabsContent value="notes">
-            <TravelNotesPanel tips={itin.tips} setTips={(t)=>setItin({...itin, tips:t})} editMode={editMode} />
+            <div className="text-sm text-muted-foreground mb-2">Trip tips / reminders</div>
+            <ul className="list-disc pl-6 space-y-1 text-sm">
+              {itin.tips.map((t,i)=> (<li key={i}>{t}</li>))}
+            </ul>
           </TabsContent>
         </Tabs>
 
@@ -844,7 +907,7 @@ function ItineraryApp(){
           </CardHeader>
           <CardContent className="text-sm text-muted-foreground space-y-2">
             <p>Use <span className="font-medium">Export .ics</span> to drop events into your calendar. Use <span className="font-medium">Print</span> for a clean PDF (browser print dialog).</p>
-            <p>Your edits auto‑save to your browser (local storage). Click <span className="font-medium">Reset</span> anytime to restore the starter itinerary.</p>
+            <p>Your edits auto‑save to your browser (local storage). Toggle <span className="font-medium">Edit</span> to update leaderboards live.</p>
           </CardContent>
         </Card>
       </main>
