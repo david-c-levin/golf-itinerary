@@ -310,7 +310,7 @@ const seedData: Itinerary = {
       events: [
         {
           id: "pmk1",
-          title: "Portmarnock Golf Club — (2:10pm | 2:20pm) Leave 11:45am",
+          title: "Portmarnock Golf Club — (2:10pm | 2:20pm) Leave 12:30pm",
           location: "Portmarnock Golf Club, Co. Dublin",
           start: "2025-09-09T11:30:00Z",
           end: "2025-09-09T18:30:00Z",
@@ -456,23 +456,23 @@ const seedData: Itinerary = {
   // NEW: leaderboards
   leaderboard: {
     grossDollars: [
-      { player: "David", score: -24 },
-      { player: "Brit",  score: -54 },
-      { player: "Bill",  score: -2 },
-      { player: "Pat",   score: +54 },
-      { player: "Steve", score: -14 },
-      { player: "Jeff",  score: +16 },
-      { player: "Wally", score: +10 },
-      { player: "Rick",  score: +14 },
+      { player: "David", score: -26 },
+      { player: "Brit",  score: -26 },
+      { player: "Bill",  score: +26 },
+      { player: "Pat",   score: +26 },
+      { player: "Steve", score: -12 },
+      { player: "Jeff",  score: -12 },
+      { player: "Wally", score: +12 },
+      { player: "Rick",  score: +12 },
     ],
     totalWins: [
-      { player: "Rick",  score: 2 },
+      { player: "Rick",  score: 1 },
       { player: "Bill",  score: 1 },
-      { player: "Pat",   score: 2 },
+      { player: "Pat",   score: 1 },
       { player: "Wally", score: 1 },
-      { player: "David", score: 1 },
+      { player: "David", score: 0 },
       { player: "Brit",  score: 0 },
-      { player: "Jeff",  score: 1 },
+      { player: "Jeff",  score: 0 },
       { player: "Steve", score: 0 },
     ],
   },
@@ -486,13 +486,13 @@ interface HeaderBarProps {
   subtitle: string;
   onPrint: () => void;
   onReset: () => void;
-  onExAll: () => void;
+  onExportAll: () => void;
   search: string;
   setSearch: (v: string) => void;
   editMode: boolean;
   setEditMode: (v: boolean) => void;
 }
-function HeaderBar({ title, subtitle, onPrint, onReset, onExAll, search, setSearch, editMode, setEditMode }: HeaderBarProps) {
+function HeaderBar({ title, subtitle, onPrint, onReset, onExportAll, search, setSearch, editMode, setEditMode }: HeaderBarProps) {
   const onSearch = (e: React.ChangeEvent<HTMLInputElement>) => setSearch(e.target.value);
   return (
     <div className="sticky top-0 z-40 backdrop-blur bg-white/70 border-b">
@@ -514,7 +514,7 @@ function HeaderBar({ title, subtitle, onPrint, onReset, onExAll, search, setSear
               <span className="text-sm">Edit</span>
             </div>
             <Button variant="outline" onClick={onPrint}><Printer className="h-4 w-4 mr-1"/>Print</Button>
-            <Button variant="outline" onClick={onExAll}><Download className="h-4 w-4 mr-1"/>Ex .ics</Button>
+            <Button variant="outline" onClick={onExportAll}><Download className="h-4 w-4 mr-1"/>Export .ics</Button>
             <Button variant="secondary" onClick={onReset}><RefreshCw className="h-4 w-4 mr-1"/>Reset</Button>
           </div>
         </div>
