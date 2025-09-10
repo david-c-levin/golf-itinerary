@@ -367,6 +367,17 @@ const seedData: Itinerary = {
           url: "https://www.ballybuniongolfclub.com/",
           tags: ["golf", "caddie"],
         },
+        {
+          id: "Tan Yard",
+          title: "Dinner: Tan Yard (at hotel) 9PM",
+          location: "Tan Yard",
+          start: "2025-09-11T21:00:00Z",
+          end: "2025-09-11T23:00:00Z",
+          notes: "Restaurant inside the hotel.",
+          mapQuery: "Tan Yard",
+          url: "https://www.killarneyplaza.com",
+          tags: ["dinner", "wine"],
+        },
       ],
     },
     {
