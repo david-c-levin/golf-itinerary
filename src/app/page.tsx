@@ -224,13 +224,13 @@ const seedData: Itinerary = {
   tripTitle: "2025 Hammer Cup, Ireland",
   subtitle: "Dublin • Wicklow • Killarney • Kinsale | Sept 6–13, 2025",
   homeBase: "The Westbury, Dublin (first 3 nights)",
-  participants: ["David", "Steve", "Pat", "Bill", "Jeff", "Brit", "Brian", "Rick"],
+  participants: ["David", "Steve", "Pat", "Bill", "Jeff", "", "Brian", "Rick"],
   days: [
     {
       id: "2025-09-06",
       dateLabel: "Sat, Sept 6",
       city: "Dublin",
-      notes: "Check-in Westbury Hotel. Everyone has rooms booked except Rick and Brit.  Call or text if any issues checking in. Names on rooms. All fully pre-paid.",
+      notes: "Check-in Westbury Hotel. Everyone has rooms booked except Rick and .  Call or text if any issues checking in. Names on rooms. All fully pre-paid.",
       events: [
         {
           id: "sat6-dinner",
@@ -340,7 +340,7 @@ const seedData: Itinerary = {
         {
           id: "euroclub",
           title: "The European Club — Golf (via transfer)",
-          location: "The European Club, Brittas Bay, Co. Wicklow",
+          location: "The European Club, tas Bay, Co. Wicklow",
           start: "2025-09-10T09:30:00Z",
           end: "2025-09-10T21:30:00Z",
           notes: "Iconic dunes; Transfer to Killarney after golf. Bring change of clothes for long transfer after golf. Dinner in transit",
@@ -467,23 +467,23 @@ const seedData: Itinerary = {
   // NEW: leaderboards
   leaderboard: {
     grossDollars: [
-      { player: "David", score: -20 },
-      { player: "Brit",  score: -58 },
-      { player: "Bill",  score: -1 },
-      { player: "Pat",   score: +53 },
-      { player: "Steve", score: -10 },
-      { player: "Jeff",  score: +17 },
-      { player: "Wally", score: +9 },
-      { player: "Rick",  score: +10 },
+      { player: "David", score: -28 },
+      { player: "Brit",  score: -50 },
+      { player: "Bill",  score: -11 },
+      { player: "Pat",   score: +45 },
+      { player: "Steve", score: -20 },
+      { player: "Jeff",  score: +27 },
+      { player: "Wally", score: +17 },
+      { player: "Rick",  score: +20 },
     ],
     totalWins: [
-      { player: "Rick",  score: 2 },
+      { player: "Rick",  score: 3 },
       { player: "Bill",  score: 2 },
       { player: "Pat",   score: 2 },
-      { player: "Wally", score: 1 },
+      { player: "Wally", score: 3 },
       { player: "David", score: 2 },
-      { player: "Brit",  score: 0 },
-      { player: "Jeff",  score: 2 },
+      { player: "Brit",  score: 1 },
+      { player: "Jeff",  score: 3 },
       { player: "Steve", score: 1 },
     ],
   },
