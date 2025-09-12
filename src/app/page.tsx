@@ -224,7 +224,7 @@ const seedData: Itinerary = {
   tripTitle: "2025 Hammer Cup, Ireland",
   subtitle: "Dublin • Wicklow • Killarney • Kinsale | Sept 6–13, 2025",
   homeBase: "The Westbury, Dublin (first 3 nights)",
-  participants: ["David", "Steve", "Pat", "Bill", "Jeff", "", "Brian", "Rick"],
+  participants: ["David", "Steve", "Pat", "Bill", "", "", "Brian", "Rick"],
   days: [
     {
       id: "2025-09-06",
@@ -479,12 +479,12 @@ const seedData: Itinerary = {
     totalWins: [
       { player: "Rick",  score: 3.5 },
       { player: "Bill",  score: 2.5 },
-      { player: "Pat",   score: 2 },
+      { player: "Pat",   score: 2.5 },
       { player: "Wally", score: 4 },
       { player: "David", score: 3 },
       { player: "Brit",  score: 1.5 },
       { player: "Jeff",  score: 3.5 },
-      { player: "Steve", score: 1 },
+      { player: "Steve", score: 1.5 },
     ],
   },
 };
